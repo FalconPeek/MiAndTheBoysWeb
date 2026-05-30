@@ -30,7 +30,6 @@ async function validateSession(userName: string) {
 
 export async function saveVotes(voterName: string, rankings: Record<PlayerAttribute, string[]>) {
   const voterId = await validateSession(voterName);
-...
   // 2. Prepare votes
   const voteEntries: any[] = [];
   for (const [attr, targetIds] of Object.entries(rankings)) {
