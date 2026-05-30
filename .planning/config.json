@@ -1,0 +1,22 @@
+{
+  "stack": {
+    "frontend": "Next.js",
+    "backend": "Supabase",
+    "styling": "Vanilla CSS / CSS 3D / Three.js"
+  },
+  "ui_vibe": "FIFA/Group Hybrid",
+  "data_approach": "Hybrid (Automated API for WC + Manual Admin for News)",
+  "users": [
+    "Lucas Barbagallo",
+    "Lucas Lindstrom",
+    "Enoc Alegre",
+    "Lucio Coutinho",
+    "Ezequiel Oviedo",
+    "Sebastian Vigliecca",
+    "Maxi Dos Santos",
+    "Agustin Bravo",
+    "Matias Gamboa",
+    "Chino",
+    "Guido Pereyra"
+  ]
+}
