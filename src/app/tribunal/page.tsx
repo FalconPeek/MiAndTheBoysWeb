@@ -121,7 +121,7 @@ export default function TribunalPage() {
                   <select 
                     className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-white font-bold focus:border-orange-500 outline-none"
                     value={formData.target_id}
-                    onChange={(e) => setFormData({...formData, target_id: e.target_id})}
+                    onChange={(e) => setFormData({...formData, target_id: e.target.value})}
                     required
                   >
                     <option value="">Seleccionar culpable...</option>

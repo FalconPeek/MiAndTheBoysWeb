@@ -14,16 +14,23 @@ export async function getProfiles() {
   return data;
 }
 
-export async function saveVotes(voterName: string, rankings: Record<PlayerAttribute, string[]>) {
-  // 1. Get voter profile
-  const { data: voter, error: voterError } = await supabase
+async function validateSession(userName: string) {
+  // In this project, 'userName' is the identifier stored in localStorage.
+  // Ideally, we'd use Supabase Auth sessions, but for this specific 
+  // "MiAndTheBoys" setup, we validate that the user exists.
+  const { data, error } = await supabase
     .from('profiles')
     .select('id')
-    .eq('full_name', voterName)
+    .eq('full_name', userName)
     .single();
-  
-  if (voterError || !voter) throw new Error('Voter not found');
 
+  if (error || !data) throw new Error('Unauthorized session');
+  return data.id;
+}
+
+export async function saveVotes(voterName: string, rankings: Record<PlayerAttribute, string[]>) {
+  const voterId = await validateSession(voterName);
+...
   // 2. Prepare votes
   const voteEntries: any[] = [];
   for (const [attr, targetIds] of Object.entries(rankings)) {
@@ -31,7 +38,7 @@ export async function saveVotes(voterName: string, rankings: Record<PlayerAttrib
     targetIds.forEach((targetId, index) => {
       const score = 10 - index;
       voteEntries.push({
-        voter_id: voter.id,
+        voter_id: voterId,
         target_id: targetId,
         attribute: attr as PlayerAttribute,
         score: score
@@ -231,70 +238,25 @@ export async function getProfile(userId: string) {
 }
 
 export async function creditGC(userId: string, amount: number, type: string, description: string) {
-  // 1. Get current balance
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('balance')
-    .eq('id', userId)
-    .single();
+  const { error } = await supabase.rpc('credit_gc', {
+    target_user_id: userId,
+    amount_to_add: amount,
+    tx_type: type,
+    tx_description: description
+  });
   
-  if (profileError) throw profileError;
-
-  const newBalance = (profile.balance || 0) + amount;
-
-  // 2. Update balance
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ balance: newBalance })
-    .eq('id', userId);
-  
-  if (updateError) throw updateError;
-
-  // 3. Record transaction
-  const { error: transError } = await supabase
-    .from('transactions')
-    .insert({
-      user_id: userId,
-      amount: amount,
-      type: type,
-      description: description
-    });
-  
-  if (transError) throw transError;
+  if (error) throw error;
 }
 
 export async function debitGC(userId: string, amount: number, type: string, description: string) {
-  // 1. Get current balance
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('balance')
-    .eq('id', userId)
-    .single();
+  const { error } = await supabase.rpc('debit_gc', {
+    target_user_id: userId,
+    amount_to_subtract: amount,
+    tx_type: type,
+    tx_description: description
+  });
   
-  if (profileError) throw profileError;
-  if ((profile.balance || 0) < amount) throw new Error('Insufficient GuriCoins');
-
-  const newBalance = profile.balance - amount;
-
-  // 2. Update balance
-  const { error: updateError } = await supabase
-    .from('profiles')
-    .update({ balance: newBalance })
-    .eq('id', userId);
-  
-  if (updateError) throw updateError;
-
-  // 3. Record transaction
-  const { error: transError } = await supabase
-    .from('transactions')
-    .insert({
-      user_id: userId,
-      amount: -amount,
-      type: type,
-      description: description
-    });
-  
-  if (transError) throw transError;
+  if (error) throw error;
 }
 
 export async function createBettingEvent(title: string, description: string, type: 'SPORTS' | 'SOCIAL', options: Record<string, string>) {
